@@ -92,6 +92,7 @@ class UserLogin(SQLModel):
 
 class UserLoginResponse(UserRead):
     access_token: str
+    token_type: str
 
 class UserUpdate(SQLModel):
     username: Optional[str] = None

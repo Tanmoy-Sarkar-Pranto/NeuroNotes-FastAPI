@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session,select
 
 from app.models import UserCreate, User, UserLogin
 from app.core import get_session
@@ -13,6 +13,9 @@ router = APIRouter(
 
 @router.post("/")
 def create_user(user: UserCreate, session: Session = Depends(get_session)):
+    existing_user = session.exec(select(User).where(User.email == user.email)).first()
+    if existing_user is not None:
+        raise HTTPException(status_code=400, detail="User already exists with that email")
     try:
         user = UserCreate.model_dump(user)
 

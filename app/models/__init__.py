@@ -1,5 +1,5 @@
 # app/models/__init__.py
-from .user import User, UserCreate, UserRead, UserUpdate, UserLogin
+from .user import User, UserCreate, UserRead, UserUpdate, UserLogin, UserLoginResponse
 from .topic import (
     Topic,
     TopicEdge,
@@ -21,6 +21,7 @@ __all__ = [
     "UserRead",
     "UserUpdate",
     "UserLogin",
+    "UserLoginResponse",
 
     # Topic models
     "Topic",
