@@ -9,6 +9,7 @@ from uuid import UUID
 
 from app.core.database import get_session
 from app.core.config import settings
+from app.data.repository import UserRepository
 from app.models.user import User
 
 # Security scheme
@@ -72,3 +73,7 @@ def get_current_active_user(
     """
     # Add any additional checks here (e.g., user.is_active, user.is_verified)
     return current_user
+
+
+def get_user_repository(session: Session = Depends(get_db)):
+    return UserRepository(session)

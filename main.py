@@ -1,8 +1,10 @@
 # app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 
+from app.core import validation_exception_handler
 from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.api.v1 import user_router, auth_router
@@ -25,6 +27,8 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan
 )
+
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 # Set up CORS
 app.add_middleware(
