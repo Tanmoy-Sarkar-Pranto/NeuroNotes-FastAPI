@@ -2,9 +2,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from uuid import UUID, uuid4
-from sqlmodel import SQLModel, Field, Relationship, Column, JSON
-from sqlalchemy import ARRAY, String
-from pgvector.sqlalchemy import Vector
+from sqlmodel import SQLModel, Field, Relationship, Column, JSON, UniqueConstraint
 
 if TYPE_CHECKING:
     from .user import User
@@ -14,7 +12,6 @@ if TYPE_CHECKING:
 class TopicBase(SQLModel):
     title: str = Field(max_length=255)
     description: Optional[str] = None
-    tags: Optional[List[str]] = Field(default=None, sa_column=Column(ARRAY(String)))
     node_type: Optional[str] = Field(default=None, max_length=20)
     position: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 
@@ -26,6 +23,8 @@ class Topic(TopicBase, table=True):
     user_id: UUID = Field(foreign_key="users.id", index=True)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+    __table_args__ = (UniqueConstraint("title", "user_id", name="uq_user_topic_title"),)
 
     # Relationships
     user: "User" = Relationship(back_populates="topics")
