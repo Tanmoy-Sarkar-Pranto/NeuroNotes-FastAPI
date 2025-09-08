@@ -20,7 +20,7 @@ class Topic(TopicBase, table=True):
     __tablename__ = "topics"
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    user_id: UUID = Field(foreign_key="users.id", index=True)
+    user_id: UUID = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -50,8 +50,8 @@ class TopicEdge(TopicEdgeBase, table=True):
     __tablename__ = "topic_edges"
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    source: UUID = Field(foreign_key="topics.id", index=True)
-    target: UUID = Field(foreign_key="topics.id", index=True)
+    source: UUID = Field(foreign_key="topics.id", index=True, ondelete="CASCADE")
+    target: UUID = Field(foreign_key="topics.id", index=True, ondelete="CASCADE")
 
     # Relationships
     source_topic: Topic = Relationship(

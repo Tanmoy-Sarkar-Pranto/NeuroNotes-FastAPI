@@ -22,8 +22,8 @@ class Note(NoteBase, table=True):
     __tablename__ = "notes"
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    topic_id: UUID = Field(foreign_key="topics.id", index=True)
-    user_id: UUID = Field(foreign_key="users.id", index=True)
+    topic_id: UUID = Field(foreign_key="topics.id", index=True, ondelete="CASCADE")
+    user_id: UUID = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 

@@ -17,14 +17,14 @@ class NoteTagBase(SQLModel):
 class NoteTagMap(SQLModel, table=True):
     __tablename__ = "note_tag_map"
 
-    note_id: UUID = Field(foreign_key="notes.id", primary_key=True)
-    tag_id: UUID = Field(foreign_key="note_tags.id", primary_key=True)
+    note_id: UUID = Field(foreign_key="notes.id", primary_key=True, ondelete="CASCADE")
+    tag_id: UUID = Field(foreign_key="note_tags.id", primary_key=True, ondelete="CASCADE")
 
 class NoteTag(NoteTagBase, table=True):
     __tablename__ = "note_tags"
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    user_id: UUID = Field(foreign_key="users.id", index=True)
+    user_id: UUID = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
     created_at: datetime = Field(default_factory=datetime.now)
 
     # Relationships
