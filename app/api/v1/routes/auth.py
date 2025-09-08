@@ -11,7 +11,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.post("/register", response_model=UserApiResponse[UserLoginResponse], response_model_exclude_none=True)
+@router.post("/register", response_model=UserApiResponse[UserRead], response_model_exclude_none=True)
 def create_user(user: UserCreate, session: Session = Depends(get_session)):
     existing_user = session.exec(select(User).where(User.email == user.email)).first()
     if existing_user is not None:

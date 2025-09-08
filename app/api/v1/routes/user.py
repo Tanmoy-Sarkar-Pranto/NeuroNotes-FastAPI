@@ -18,7 +18,6 @@ router = APIRouter(
 
 def verify_token(req: Request):
     token = req.headers.get("Authorization")[6:]
-    print(token)
 
     if not token:
         raise HTTPException(
