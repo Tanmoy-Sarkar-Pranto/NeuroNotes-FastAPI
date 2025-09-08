@@ -1,11 +1,8 @@
-import jwt
-from fastapi import APIRouter, Depends, Request, HTTPException
-from jwt import PyJWTError
+from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
 from app.core import get_session
-from app.core.config import settings
-from app.core.deps import get_user_repository
+from app.core.deps import get_user_repository, verify_token
 from app.data.repository import UserRepository
 from app.dtos import UserApiResponse
 from app.models import UserRead
@@ -15,23 +12,6 @@ router = APIRouter(
     tags=["user"],
     responses={404: {"description": "Not found"}}
 )
-
-def verify_token(req: Request):
-    token = req.headers.get("Authorization")[6:]
-
-    if not token:
-        raise HTTPException(
-            status_code=401,
-            detail="Could not validate credentials.",
-        )
-    try:
-        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        return decoded_token
-    except PyJWTError:
-        raise HTTPException(
-            status_code=401,
-            detail="Could not validate credentials.",
-        )
 
 @router.get("/", response_model=UserApiResponse[UserRead], response_model_exclude_none=True)
 async def read_user(session: Session = Depends(get_session), decoded_token: str = Depends(verify_token), user_repository: UserRepository = Depends(get_user_repository)):

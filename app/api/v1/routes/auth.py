@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from app.core import get_session, create_access_token
+from app.core.deps import get_user_repository
+from app.core.domain import Error
+from app.data.repository import UserRepository
+from app.domain.models import UserError
+from app.domain.use_case.auth import register_user
 from app.dtos import UserApiResponse
 from app.models import UserLogin, User, UserLoginResponse, UserCreate, UserRead
 from app.util import verify_password, hash_password
@@ -12,32 +17,21 @@ router = APIRouter(
 )
 
 @router.post("/register", response_model=UserApiResponse[UserRead], response_model_exclude_none=True)
-def create_user(user: UserCreate, session: Session = Depends(get_session)):
-    existing_user = session.exec(select(User).where(User.email == user.email)).first()
-    if existing_user is not None:
-        raise HTTPException(status_code=400, detail="User already exists with that email")
-    try:
-        user = UserCreate.model_dump(user)
+def create_user(user: UserCreate, session: Session = Depends(get_session), user_repository: UserRepository = Depends(get_user_repository)):
+    result = register_user(user, user_repository)
 
-        raw_password = user.pop("password")
-        hashed_password = hash_password(raw_password)
+    if isinstance(result, Error):
+        if UserError.ALREADY_EXISTS == result.error:
+            return UserApiResponse.error_response(message="User already exists with that email.").model_dump()
 
-        db_user = User(**user, hashed_password=hashed_password)
-        session.add(db_user)
-        session.commit()
-        session.refresh(db_user)
+    user_response = UserRead(
+        id=str(result.data.id),
+        username=result.data.username,
+        email=result.data.email,
+        created_at=result.data.created_at
+    )
 
-        user_response = UserRead(
-            id=str(db_user.id),
-            username=db_user.username,
-            email=db_user.email,
-            created_at=db_user.created_at
-        )
-
-        return UserApiResponse.success_response(message="User created successfully", data=user_response, status=201).model_dump()
-    except RuntimeError as e:
-        session.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    return UserApiResponse.success_response(message="User created successfully", data=user_response, status=201).model_dump()
 
 
 @router.post("/login", response_model=UserApiResponse[UserLoginResponse], response_model_exclude_none=True)

@@ -1,6 +1,6 @@
 # app/api/deps.py
 from typing import Generator
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt  # <-- using PyJWT
 from jwt import PyJWTError  # Base class for all errors
@@ -9,12 +9,34 @@ from uuid import UUID
 
 from app.core.database import get_session
 from app.core.config import settings
-from app.data.repository import UserRepository
+from app.data.repository import UserRepository, TopicRepository
 from app.models.user import User
 
 # Security scheme
 security = HTTPBearer()
 
+
+def verify_token(req: Request):
+    if "Authorization" not in req.headers:
+        raise HTTPException(
+            status_code=401,
+            detail="Could not validate credentials.",
+        )
+    token = req.headers.get("Authorization")[6:]
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Could not validate credentials.",
+        )
+    try:
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        return decoded_token
+    except PyJWTError:
+        raise HTTPException(
+            status_code=401,
+            detail="Could not validate credentials.",
+        )
 
 def get_db() -> Generator[Session, None, None]:
     """Database session dependency - alias for get_session for convenience."""
@@ -77,3 +99,6 @@ def get_current_active_user(
 
 def get_user_repository(session: Session = Depends(get_db)):
     return UserRepository(session)
+
+def get_topic_repository(session: Session = Depends(get_db)):
+    return TopicRepository(session)

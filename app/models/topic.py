@@ -2,18 +2,23 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from uuid import UUID, uuid4
+
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field, Relationship, Column, JSON, UniqueConstraint
 
 if TYPE_CHECKING:
     from .user import User
     from .note import Note
 
+class Position(BaseModel):
+    x: float
+    y: float
 
 class TopicBase(SQLModel):
     title: str = Field(max_length=255)
     description: Optional[str] = None
     node_type: Optional[str] = Field(default=None, max_length=20)
-    position: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    position: Optional[Position] = Field(default=None, sa_column=Column(JSON))
 
 
 class Topic(TopicBase, table=True):

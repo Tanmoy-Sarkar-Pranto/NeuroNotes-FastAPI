@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlmodel import select
 
 from app.models import User
@@ -15,4 +17,9 @@ class UserRepository:
 
     def get_user_by_email(self, email: str) -> User | None:
         user: User = self.session.exec(select(User).where(User.email == email)).first()
+        return user
+
+    def get_user_by_id(self, user_id: str) -> User | None:
+        user_uuid = UUID(user_id)
+        user: User = self.session.exec(select(User).where(User.id == user_uuid)).first()
         return user
