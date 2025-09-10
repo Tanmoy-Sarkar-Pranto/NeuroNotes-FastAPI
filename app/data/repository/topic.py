@@ -24,6 +24,6 @@ class TopicRepository:
         topic: Topic = self.session.exec(select(Topic).where(Topic.id == topic_id)).first()
         return topic
 
-    def get_all_topics(self) -> List[Topic] | None:
-        topics: List[Topic] = self.session.exec(select(Topic)).all()
+    def get_all_topics(self, user_id: str) -> List[Topic] | None:
+        topics: List[Topic] = self.session.exec(select(Topic).where(Topic.user_id == user_id)).all()
         return topics

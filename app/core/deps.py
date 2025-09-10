@@ -62,7 +62,7 @@ def get_current_user_id(
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
-        user_id: str | None = payload.get("sub")
+        user_id: str | None = payload.get("userId")
         if user_id is None:
             raise credentials_exception
         return UUID(user_id)
