@@ -9,7 +9,8 @@ from .topic import (
     TopicUpdate,
     TopicEdgeCreate,
     TopicEdgeRead,
-    TopicEdgeUpdate
+    TopicEdgeUpdate,
+    Position
 )
 from .note import Note, NoteCreate, NoteRead, NoteReadWithTags, NoteUpdate
 from .tag import NoteTag, NoteTagMap, NoteTagCreate, NoteTagRead, NoteTagUpdate
@@ -33,6 +34,7 @@ __all__ = [
     "TopicEdgeCreate",
     "TopicEdgeRead",
     "TopicEdgeUpdate",
+    "Position",
 
     # Note models
     "Note",

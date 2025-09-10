@@ -90,9 +90,8 @@ class TopicReadWithEdges(TopicRead):
 class TopicUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    tags: Optional[List[str]] = None
     node_type: Optional[str] = None
-    position: Optional[Dict[str, Any]] = None
+    position: Optional[Position] = Field(default=None, sa_column=Column(JSON))
 
 
 class TopicEdgeCreate(TopicEdgeBase):
