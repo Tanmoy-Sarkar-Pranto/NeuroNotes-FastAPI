@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from .user import User
     from .topic import Topic
     from .tag import NoteTag, NoteTagRead
+else:
+    from .tag import NoteTagRead
 
 
 class NoteBase(SQLModel):
@@ -49,7 +51,7 @@ class NoteRead(NoteBase):
 
 
 class NoteReadWithTags(NoteRead):
-    tags: List["NoteTagRead"] = []
+    tags: List[NoteTagRead] = []
 
 
 class NoteUpdate(SQLModel):
