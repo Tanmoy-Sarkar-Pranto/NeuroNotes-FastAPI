@@ -10,6 +10,7 @@ from uuid import UUID
 from app.core.database import get_session
 from app.core.config import settings
 from app.data.repository import UserRepository, TopicRepository, NoteRepository
+from app.data.repository.tag import TagRepository
 from app.models.user import User
 
 # Security scheme
@@ -105,3 +106,6 @@ def get_topic_repository(session: Session = Depends(get_db)):
 
 def get_note_repository(session: Session = Depends(get_db)):
     return NoteRepository(session)
+
+def get_tag_repository(session: Session = Depends(get_db)):
+    return TagRepository(session)
