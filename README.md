@@ -238,8 +238,7 @@ NeuroNotes-FastAPI/
 │   └── util/              # Utility functions
 ├── alembic/               # Database migrations
 ├── main.py               # Application entry point
-├── requirements.txt      # Dependencies
-└── CLAUDE.md            # Development guidelines
+└── requirements.txt      # Dependencies
 ```
 
 ### Adding New Features
