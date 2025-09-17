@@ -9,7 +9,7 @@ from uuid import UUID
 
 from app.core.database import get_session
 from app.core.config import settings
-from app.data.repository import UserRepository, TopicRepository
+from app.data.repository import UserRepository, TopicRepository, NoteRepository
 from app.models.user import User
 
 # Security scheme
@@ -102,3 +102,6 @@ def get_user_repository(session: Session = Depends(get_db)):
 
 def get_topic_repository(session: Session = Depends(get_db)):
     return TopicRepository(session)
+
+def get_note_repository(session: Session = Depends(get_db)):
+    return NoteRepository(session)

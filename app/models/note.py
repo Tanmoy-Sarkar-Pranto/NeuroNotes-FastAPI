@@ -42,9 +42,8 @@ class NoteCreate(NoteBase):
 
 
 class NoteRead(NoteBase):
-    id: UUID
-    topic_id: UUID
-    user_id: UUID
+    id: Optional[UUID]
+    topic_id: Optional[UUID]
     created_at: datetime
     updated_at: datetime
 

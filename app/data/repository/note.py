@@ -15,8 +15,8 @@ class NoteRepository:
         self.session.refresh(note)
         return note
 
-    def read_all_notes(self, user_id: str) -> List[Note] | None:
-        notes: List[Note] = self.session.exec(select(Note).where(Note.user_id == user_id)).all()
+    def read_all_notes(self, topic_id: str, user_id: str) -> List[Note] | None:
+        notes: List[Note] = self.session.exec(select(Note).where(Note.user_id == user_id, Note.topic_id == topic_id)).all()
         return notes
 
     def read_note_by_id(self, note_id: str, user_id: str) -> Note | None:
