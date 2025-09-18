@@ -23,7 +23,7 @@ def verify_token(req: Request):
             status_code=401,
             detail="Could not validate credentials.",
         )
-    token = req.headers.get("Authorization")[6:]
+    token = req.headers.get("Authorization")[7:]
 
     if not token:
         raise HTTPException(

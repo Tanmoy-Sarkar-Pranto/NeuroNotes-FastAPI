@@ -1,6 +1,13 @@
-# NeuroNotes FastAPI
+# NeuroNotes
 
-A knowledge management system with graph visualization capabilities built with FastAPI. NeuroNotes allows users to create, organize, and visualize topics and notes in an interconnected knowledge graph with tagging and relationship management.
+A full-stack knowledge management system with graph visualization capabilities. NeuroNotes allows users to create, organize, and visualize topics and notes in an interconnected knowledge graph with tagging and relationship management.
+
+## Technology Stack
+
+- **Backend**: FastAPI (Python)
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS v4.0+
+- **Database**: PostgreSQL with pgvector extension
+- **Architecture**: Monolithic structure optimized for deployment on Render
 
 ## Features
 
@@ -12,23 +19,34 @@ A knowledge management system with graph visualization capabilities built with F
 - **RESTful API**: Clean, well-documented REST API endpoints
 - **Database Integration**: PostgreSQL with pgvector support for future vector operations
 
+## Project Structure
+
+```
+NeuroNotes/
+├── backend/              # FastAPI backend application
+│   ├── app/
+│   │   ├── api/v1/routes/     # HTTP interface layer
+│   │   ├── core/              # Infrastructure and configuration
+│   │   ├── data/repository/   # Data access layer
+│   │   ├── domain/            # Business logic layer
+│   │   ├── dtos/              # Data transfer objects
+│   │   └── models/            # Database models (SQLModel)
+│   ├── alembic/               # Database migrations
+│   ├── main.py               # Backend entry point
+│   └── requirements.txt      # Python dependencies
+├── frontend/             # React frontend application
+│   ├── src/                  # Source code
+│   ├── public/               # Static assets
+│   ├── package.json          # Node.js dependencies
+│   └── vite.config.ts        # Vite configuration
+└── README.md            # Project documentation
+```
+
 ## Architecture
 
-### Clean Architecture Implementation
+### Backend - Clean Architecture Implementation
 
-This application follows Clean Architecture principles with clear separation of concerns:
-
-```
-app/
-├── api/v1/routes/        # HTTP interface layer
-├── core/                 # Infrastructure and configuration
-├── data/repository/      # Data access layer
-├── domain/
-│   ├── models/          # Domain error definitions
-│   └── use_case/        # Business logic layer
-├── dtos/                # Data transfer objects
-└── models/              # Database models (SQLModel)
-```
+The FastAPI backend follows Clean Architecture principles with clear separation of concerns:
 
 **Key Architectural Components:**
 
@@ -37,7 +55,14 @@ app/
 - **Result Pattern**: Functional error handling with `Success[T]` and `Error[E]` types
 - **Dependency Injection**: FastAPI's built-in DI for repository and service management
 
-### Technology Stack
+### Frontend - React + Vite + Tailwind CSS
+
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite for fast development and building
+- **Styling**: Tailwind CSS v4.0+ for utility-first styling
+- **Development**: Hot reload and modern development experience
+
+### Backend Technology Stack
 
 - **Framework**: FastAPI 0.116.1+
 - **Database**: PostgreSQL with pgvector extension
@@ -48,9 +73,10 @@ app/
 
 ## Prerequisites
 
-- Python 3.10+
-- PostgreSQL 12+
-- pgvector extension (for future vector operations)
+- **Python 3.10+** (for backend)
+- **Node.js 18+** (for frontend)
+- **PostgreSQL 12+** (database)
+- **pgvector extension** (for future vector operations)
 
 ## Installation & Setup
 
@@ -60,8 +86,10 @@ git clone https://github.com/Tanmoy-Sarkar-Pranto/NeuroNotes-FastAPI.git
 cd NeuroNotes-FastAPI
 ```
 
-### 2. Environment Setup
+### 2. Backend Setup
 ```bash
+cd backend
+
 # Create virtual environment
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
@@ -71,7 +99,15 @@ uv sync
 # Or alternatively: pip install -r requirements.txt
 ```
 
-### 3. Database Setup
+### 3. Frontend Setup
+```bash
+cd ../frontend
+
+# Install dependencies
+npm install
+```
+
+### 4. Database Setup
 ```bash
 # Create PostgreSQL database
 createdb neuronotes
@@ -80,8 +116,8 @@ createdb neuronotes
 psql -d neuronotes -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
-### 4. Environment Configuration
-Create a `.env` file in the root directory:
+### 5. Environment Configuration
+Create a `.env` file in the `backend` directory:
 ```env
 # Database
 DATABASE_URL=postgresql://username:password@localhost:5432/neuronotes
@@ -96,14 +132,34 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 BACKEND_CORS_ORIGINS=["http://localhost:3000", "http://localhost:5173"]
 ```
 
-### 5. Database Migration
+### 6. Database Migration
 ```bash
+cd backend
+
 # Run migrations to create tables
 alembic upgrade head
 ```
 
-### 6. Start the Application
+### 7. Start the Application
+
+#### Quick Start (Recommended)
 ```bash
+# Start both servers simultaneously
+./start-dev.sh      # On macOS/Linux
+start-dev.bat       # On Windows
+```
+
+This will start:
+- **Backend API**: `http://localhost:8000`
+- **Frontend App**: `http://localhost:5173`
+- **API Documentation**: `http://localhost:8000/docs`
+
+#### Individual Server Startup
+
+##### Backend (API)
+```bash
+cd backend
+
 # Development server
 python main.py
 
@@ -111,7 +167,13 @@ python main.py
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will be available at `http://localhost:8000`
+##### Frontend (React App)
+```bash
+cd frontend
+
+# Development server
+npm run dev
+```
 
 ## API Documentation
 

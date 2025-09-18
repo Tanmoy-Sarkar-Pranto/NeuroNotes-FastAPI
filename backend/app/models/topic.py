@@ -14,11 +14,16 @@ class Position(BaseModel):
     x: float
     y: float
 
+    class Config:
+        json_encoders = {
+            'Position': lambda v: {"x": v.x, "y": v.y} if v else None
+        }
+
 class TopicBase(SQLModel):
     title: str = Field(max_length=255)
     description: Optional[str] = None
     node_type: Optional[str] = Field(default=None, max_length=20)
-    position: Optional[Position] = Field(default=None, sa_column=Column(JSON))
+    position: Optional[dict] = Field(default=None, sa_column=Column(JSON))
 
 
 class Topic(TopicBase, table=True):
@@ -91,7 +96,7 @@ class TopicUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
     node_type: Optional[str] = None
-    position: Optional[Position] = Field(default=None, sa_column=Column(JSON))
+    position: Optional[dict] = Field(default=None)
 
 
 class TopicEdgeCreate(TopicEdgeBase):

@@ -15,7 +15,8 @@ def update_topic_by_id(topic_id: str, user_id: str, topic: TopicUpdate, topic_re
     existing_topic.description = topic.description or existing_topic.description
     existing_topic.updated_at = datetime.now()
     existing_topic.node_type = topic.node_type or existing_topic.node_type
-    existing_topic.position = topic.position or existing_topic.position
+    if topic.position is not None:
+        existing_topic.position = topic.position
 
     topic: Topic = topic_repository.update_topic(existing_topic)
 
