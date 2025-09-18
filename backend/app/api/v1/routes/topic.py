@@ -3,9 +3,9 @@ from typing import List
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from app.core.deps import get_topic_repository, verify_token, get_user_repository
+from app.core.deps import get_topic_repository, get_topic_edge_repository, verify_token, get_user_repository
 from app.core.domain import Error
-from app.data.repository import TopicRepository, UserRepository
+from app.data.repository import TopicRepository, TopicEdgeRepository, UserRepository
 from app.domain.models import TopicError, UserError
 from app.domain.use_case.topic import create_topic as create_topic_use_case, read_all_topics, read_topic_by_id, \
     update_topic_by_id, delete_topic_by_id
@@ -20,13 +20,13 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=TopicApiResponse, response_model_exclude_none=True)
-def create_topic(topic: TopicCreate, decoded_token: dict = Depends(verify_token), topic_repository: TopicRepository = Depends(get_topic_repository), user_repository: UserRepository = Depends(get_user_repository)):
+def create_topic(topic: TopicCreate, decoded_token: dict = Depends(verify_token), topic_repository: TopicRepository = Depends(get_topic_repository), topic_edge_repository: TopicEdgeRepository = Depends(get_topic_edge_repository), user_repository: UserRepository = Depends(get_user_repository)):
     db_user = get_user(decoded_token, user_repository)
     if isinstance(db_user, Error):
         if db_user.error == UserError.NOT_FOUND:
             return TopicApiResponse.error_response(message="Unauthorized.", status=401).model_dump()
 
-    result = create_topic_use_case(topic, db_user.data, topic_repository)
+    result = create_topic_use_case(topic, db_user.data, topic_repository, topic_edge_repository)
     if isinstance(result, Error):
         if result.error == TopicError.ALREADY_EXISTS:
             return TopicApiResponse.error_response(message="Topic already exists.").model_dump()
