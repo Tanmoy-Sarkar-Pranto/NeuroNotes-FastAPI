@@ -62,17 +62,34 @@ def read_topic(topicid: str, decoded_token : dict = Depends(verify_token), topic
     return TopicApiResponse.success_response(message="Topic fetched successfully.", data=result.data).model_dump()
 
 @router.patch("/{topicid}", response_model=TopicApiResponse[TopicRead], response_model_exclude_none=True)
-def update_topic(topicid: str, topic: TopicUpdate, decoded_token : dict = Depends(verify_token), topic_repository: TopicRepository = Depends(get_topic_repository), user_repository: UserRepository = Depends(get_user_repository)):
+def update_topic(topicid: str, topic: TopicUpdate, decoded_token : dict = Depends(verify_token), topic_repository: TopicRepository = Depends(get_topic_repository), topic_edge_repository: TopicEdgeRepository = Depends(get_topic_edge_repository), user_repository: UserRepository = Depends(get_user_repository)):
     db_user = get_user(decoded_token, user_repository)
     if isinstance(db_user, Error):
         if db_user.error == UserError.NOT_FOUND:
             return TopicApiResponse.error_response(message="Unauthorized.", status=401).model_dump()
 
-    result = update_topic_by_id(topicid, str(db_user.data.id), topic, topic_repository)
+    result = update_topic_by_id(topicid, str(db_user.data.id), topic, topic_repository, topic_edge_repository)
     if isinstance(result, Error):
         if result.error == TopicError.NOT_FOUND:
             return TopicApiResponse.error_response(message="Topic not found.", status=404).model_dump()
     return TopicApiResponse.success_response(message="Topic updated successfully.", data=result.data).model_dump()
+
+@router.get("/{topicid}/edges", response_model=TopicApiResponse, response_model_exclude_none=True)
+def get_topic_edges(topicid: str, decoded_token: dict = Depends(verify_token), topic_edge_repository: TopicEdgeRepository = Depends(get_topic_edge_repository), user_repository: UserRepository = Depends(get_user_repository)):
+    db_user = get_user(decoded_token, user_repository)
+    if isinstance(db_user, Error):
+        if db_user.error == UserError.NOT_FOUND:
+            return TopicApiResponse.error_response(message="Unauthorized.", status=401).model_dump()
+
+    edges = topic_edge_repository.get_edges_by_source(topicid)
+    edge_data = []
+    for edge in edges:
+        edge_data.append({
+            "target_topic_id": str(edge.target),
+            "relation_type": edge.relation_type
+        })
+
+    return TopicApiResponse.success_response(message="Topic edges fetched successfully.", data=edge_data).model_dump()
 
 @router.delete("/{topicid}", response_model=TopicApiResponse[bool], response_model_exclude_none=True)
 def delete_topic(topicid: str, decoded_token : dict = Depends(verify_token), topic_repository: TopicRepository = Depends(get_topic_repository), user_repository: UserRepository = Depends(get_user_repository)):

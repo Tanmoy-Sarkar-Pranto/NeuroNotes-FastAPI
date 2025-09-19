@@ -43,11 +43,17 @@ class Topic(TopicBase, table=True):
     # Edge relationships
     outgoing_edges: List["TopicEdge"] = Relationship(
         back_populates="source_topic",
-        sa_relationship_kwargs={"foreign_keys": "TopicEdge.source"}
+        sa_relationship_kwargs={
+            "foreign_keys": "TopicEdge.source",
+            "passive_deletes": True,
+        },
     )
     incoming_edges: List["TopicEdge"] = Relationship(
         back_populates="target_topic",
-        sa_relationship_kwargs={"foreign_keys": "TopicEdge.target"}
+        sa_relationship_kwargs={
+            "foreign_keys": "TopicEdge.target",
+            "passive_deletes": True,
+        },
     )
 
 
@@ -97,6 +103,8 @@ class TopicUpdate(SQLModel):
     description: Optional[str] = None
     node_type: Optional[str] = None
     position: Optional[dict] = Field(default=None)
+    related_topics: Optional[List[UUID]] = None
+    relation_types: Optional[List[str]] = None
 
 
 class TopicEdgeCreate(TopicEdgeBase):
