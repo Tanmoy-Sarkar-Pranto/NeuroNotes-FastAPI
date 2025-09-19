@@ -144,6 +144,41 @@ class ApiService {
     const data = await this.handleResponse(response);
     return data.data || data;
   }
+
+  async getTopicEdges(topicId) {
+    const response = await fetch(`${API_BASE_URL}/topics/${topicId}/edges`, {
+      method: 'GET',
+      headers: this.getHeaders(true),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async createTopicEdge(sourceTopicId, targetTopicId, relationType = 'related') {
+    const response = await fetch(`${API_BASE_URL}/topics/topic-edges`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({
+        source: sourceTopicId,
+        target: targetTopicId,
+        relation_type: relationType
+      }),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async deleteTopicEdge(sourceTopicId, targetTopicId) {
+    const response = await fetch(`${API_BASE_URL}/topics/topic-edges/${sourceTopicId}/${targetTopicId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
 }
 
 export const apiService = new ApiService();

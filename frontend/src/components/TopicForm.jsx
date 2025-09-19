@@ -12,6 +12,11 @@ const TopicForm = ({ topic, onSuccess, onCancel }) => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
 
+  // Related topics state
+  const [availableTopics, setAvailableTopics] = useState([]);
+  const [selectedRelatedTopics, setSelectedRelatedTopics] = useState([]);
+  const [loadingTopics, setLoadingTopics] = useState(false);
+
   useEffect(() => {
     if (topic) {
       setFormData({
@@ -19,8 +24,67 @@ const TopicForm = ({ topic, onSuccess, onCancel }) => {
         description: topic.description || '',
         position: topic.position || { x: 0, y: 0 }
       });
+      // Load existing relationships when editing
+      fetchExistingRelationships(topic.id);
     }
   }, [topic]);
+
+  // Fetch available topics for relationships
+  useEffect(() => {
+    fetchAvailableTopics();
+  }, []);
+
+  const fetchAvailableTopics = async () => {
+    try {
+      setLoadingTopics(true);
+      const topics = await apiService.getTopics();
+      setAvailableTopics(Array.isArray(topics) ? topics : []);
+    } catch (err) {
+      console.error('Failed to fetch topics:', err);
+      setAvailableTopics([]);
+    } finally {
+      setLoadingTopics(false);
+    }
+  };
+
+  const fetchExistingRelationships = async (topicId) => {
+    try {
+      const edges = await apiService.getTopicEdges(topicId);
+      const relationships = (Array.isArray(edges) ? edges : []).map(edge => ({
+        topicId: edge.target_topic_id,
+        relationshipType: edge.relation_type || 'related'
+      }));
+      setSelectedRelatedTopics(relationships);
+    } catch (err) {
+      console.error('Failed to fetch existing relationships:', err);
+      setSelectedRelatedTopics([]);
+    }
+  };
+
+  // Related topics management
+  const addRelatedTopic = (topicId, relationshipType = 'related') => {
+    if (!selectedRelatedTopics.find(rt => rt.topicId === topicId)) {
+      setSelectedRelatedTopics([
+        ...selectedRelatedTopics,
+        { topicId, relationshipType }
+      ]);
+    }
+  };
+
+  const removeRelatedTopic = (topicId) => {
+    setSelectedRelatedTopics(selectedRelatedTopics.filter(rt => rt.topicId !== topicId));
+  };
+
+  const updateRelationshipType = (topicId, relationshipType) => {
+    setSelectedRelatedTopics(selectedRelatedTopics.map(rt =>
+      rt.topicId === topicId ? { ...rt, relationshipType } : rt
+    ));
+  };
+
+  const getTopicTitle = (topicId) => {
+    const topic = availableTopics.find(t => t.id === topicId);
+    return topic ? topic.title : 'Unknown Topic';
+  };
 
   // Validation functions
   const validateTitle = (title) => {
@@ -122,6 +186,16 @@ const TopicForm = ({ topic, onSuccess, onCancel }) => {
         description: formData.description || null,
         position: formData.position
       };
+
+      // Add related topics data
+      if (selectedRelatedTopics.length > 0) {
+        topicData.related_topics = selectedRelatedTopics.map(rt => rt.topicId);
+        topicData.relation_types = selectedRelatedTopics.map(rt => rt.relationshipType);
+      } else if (topic) {
+        // If editing and no related topics selected, send empty arrays to clear existing relationships
+        topicData.related_topics = [];
+        topicData.relation_types = [];
+      }
 
       if (topic) {
         await apiService.updateTopic(topic.id, topicData);
@@ -244,6 +318,87 @@ const TopicForm = ({ topic, onSuccess, onCancel }) => {
               Coordinates for graph visualization (-1000 to 1000)
             </p>
           </div>
+
+          {/* Related Topics Section */}
+          <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Related Topics
+              </label>
+
+              {/* Topic Selection */}
+              <div className="mb-3">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      addRelatedTopic(e.target.value);
+                      e.target.value = ''; // Reset selection
+                    }
+                  }}
+                  disabled={loadingTopics}
+                >
+                  <option value="">
+                    {loadingTopics ? 'Loading topics...' : 'Select a topic to relate'}
+                  </option>
+                  {availableTopics
+                    .filter(t =>
+                      !selectedRelatedTopics.find(rt => rt.topicId === t.id) &&
+                      (!topic || t.id !== topic.id) // Exclude the topic being edited
+                    )
+                    .map(availableTopic => (
+                      <option key={availableTopic.id} value={availableTopic.id}>
+                        {availableTopic.title}
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              {/* Selected Related Topics */}
+              {selectedRelatedTopics.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-600 mb-2">Selected Related Topics:</p>
+                  {selectedRelatedTopics.map(relatedTopic => (
+                    <div key={relatedTopic.topicId} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                      <span className="flex-1 text-sm font-medium text-gray-700">
+                        {getTopicTitle(relatedTopic.topicId)}
+                      </span>
+
+                      {/* Relationship Type Selector */}
+                      <select
+                        value={relatedTopic.relationshipType || 'related'}
+                        onChange={(e) => updateRelationshipType(relatedTopic.topicId, e.target.value)}
+                        className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="related">Related</option>
+                        <option value="prerequisite">Prerequisite</option>
+                        <option value="follows">Follows</option>
+                        <option value="similar">Similar</option>
+                        <option value="opposite">Opposite</option>
+                        <option value="parent">Parent</option>
+                        <option value="child">Child</option>
+                      </select>
+
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={() => removeRelatedTopic(relatedTopic.topicId)}
+                        className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                        title="Remove related topic"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500 mt-2">
+                Related topics help organize knowledge connections in the graph view
+              </p>
+            </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">

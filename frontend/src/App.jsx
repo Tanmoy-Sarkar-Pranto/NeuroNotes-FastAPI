@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Topics from './components/Topics';
+import Graph from './components/Graph';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppContent = () => {
@@ -33,6 +34,14 @@ const AppContent = () => {
         element={
           <ProtectedRoute>
             <Topics />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/graph"
+        element={
+          <ProtectedRoute>
+            <Graph />
           </ProtectedRoute>
         }
       />

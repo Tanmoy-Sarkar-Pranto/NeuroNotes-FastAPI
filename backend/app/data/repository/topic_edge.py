@@ -110,6 +110,19 @@ class TopicEdgeRepository:
         self.session.commit()
         return True
 
+    def delete_edge_by_source_target(self, source_id: str, target_id: str) -> bool:
+        edge = self.session.exec(
+            select(TopicEdge).where(
+                (TopicEdge.source == source_id) & (TopicEdge.target == target_id)
+            )
+        ).first()
+
+        if edge:
+            self.session.delete(edge)
+            self.session.commit()
+            return True
+        return False
+
     def create_multiple_edges(self, edges: List[TopicEdge]) -> Success[List[TopicEdge]] | Error[TopicEdgeError]:
         try:
             created_edges = []
