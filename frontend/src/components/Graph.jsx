@@ -9,9 +9,11 @@ import {
   useEdgesState,
   addEdge,
   Panel,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { apiService } from '../services/api';
+import TopicForm from './TopicForm';
 import { useAuth } from '../contexts/AuthContext';
 
 // Get node color based on type
@@ -47,14 +49,47 @@ const Graph = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [showTopicModal, setShowTopicModal] = useState(false);
+  const [topicForEdit, setTopicForEdit] = useState(null);
 
   // Track changes for saving
   const [originalEdges, setOriginalEdges] = useState([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [savingChanges, setSavingChanges] = useState(false);
+  const [originalPositions, setOriginalPositions] = useState({});
 
   const handleLogout = () => {
     logout();
+  };
+
+  // Helper to build edge with direction markers
+  const buildEdge = (source, target, relationType = 'related') => {
+    // directional vs bidirectional markers
+    const bidirectional = ['similar', 'opposite', 'related'];
+    const markerStart = bidirectional.includes(relationType) ? { type: MarkerType.ArrowClosed, width: 16, height: 16 } : undefined;
+    const markerEnd = { type: MarkerType.ArrowClosed, width: 16, height: 16 };
+
+    return {
+      id: `${source}-${target}`,
+      source,
+      target,
+      type: 'smoothstep',
+      animated: true,
+      label: relationType || 'related',
+      style: {
+        stroke: getEdgeColor(relationType),
+        strokeWidth: 2,
+      },
+      labelStyle: {
+        fontSize: '10px',
+        fontWeight: '500',
+        background: '#ffffffaa',
+        padding: 2,
+        borderRadius: 4,
+      },
+      markerStart,
+      markerEnd,
+    };
   };
 
   // Load graph data
@@ -103,6 +138,18 @@ const Graph = () => {
         };
       });
 
+      // Build original positions map and detect topics with missing positions
+      const positionsMap = {};
+      const toPersist = [];
+      for (let i = 0; i < topics.length; i++) {
+        const t = topics[i];
+        const n = nodeList[i];
+        positionsMap[n.id] = { x: n.position.x, y: n.position.y };
+        if (!t.position || (t.position.x === 0 && t.position.y === 0)) {
+          toPersist.push({ id: t.id, position: n.position });
+        }
+      }
+
       // Fetch edges for each topic and create edge list
       const edgeList = [];
       for (const topic of topics) {
@@ -110,22 +157,7 @@ const Graph = () => {
           const topicEdges = await apiService.getTopicEdges(topic.id);
 
           topicEdges.forEach(edge => {
-            edgeList.push({
-              id: `${topic.id}-${edge.target_topic_id}`,
-              source: topic.id,
-              target: edge.target_topic_id,
-              type: 'smoothstep',
-              animated: true,
-              label: edge.relation_type || 'related',
-              style: {
-                stroke: getEdgeColor(edge.relation_type),
-                strokeWidth: 2,
-              },
-              labelStyle: {
-                fontSize: '10px',
-                fontWeight: '500',
-              },
-            });
+            edgeList.push(buildEdge(topic.id, edge.target_topic_id, edge.relation_type));
           });
         } catch (err) {
           console.warn(`Failed to fetch edges for topic ${topic.id}:`, err);
@@ -135,7 +167,15 @@ const Graph = () => {
       setNodes(nodeList);
       setEdges(edgeList);
       setOriginalEdges(edgeList); // Store original edges for comparison
+      setOriginalPositions(positionsMap);
       setHasUnsavedChanges(false); // Reset unsaved changes
+
+      // Persist computed positions for topics that had no saved positions
+      if (toPersist.length > 0) {
+        Promise.allSettled(
+          toPersist.map(({ id, position }) => apiService.updateTopic(id, { position }))
+        ).catch(() => {});
+      }
     } catch (err) {
       console.error('Failed to load graph data:', err);
       setError('Failed to load graph data. Please try again.');
@@ -151,21 +191,7 @@ const Graph = () => {
   // Handle new edge connections
   const onConnect = useCallback(
     (params) => {
-      const newEdge = {
-        ...params,
-        id: `${params.source}-${params.target}`,
-        type: 'smoothstep',
-        animated: true,
-        label: 'related',
-        style: {
-          stroke: getEdgeColor('related'),
-          strokeWidth: 2,
-        },
-        labelStyle: {
-          fontSize: '10px',
-          fontWeight: '500',
-        },
-      };
+      const newEdge = buildEdge(params.source, params.target, 'related');
       setEdges((eds) => addEdge(newEdge, eds));
       setHasUnsavedChanges(true);
     },
@@ -181,15 +207,27 @@ const Graph = () => {
     [setEdges]
   );
 
-  // Detect changes in edges
+  // Detect changes in edges or node positions
   useEffect(() => {
+    let changed = false;
     if (originalEdges.length > 0) {
       const currentEdgeIds = edges.map(e => e.id).sort();
       const originalEdgeIds = originalEdges.map(e => e.id).sort();
-      const hasChanges = JSON.stringify(currentEdgeIds) !== JSON.stringify(originalEdgeIds);
-      setHasUnsavedChanges(hasChanges);
+      changed = JSON.stringify(currentEdgeIds) !== JSON.stringify(originalEdgeIds);
     }
-  }, [edges, originalEdges]);
+
+    if (!changed && nodes.length > 0 && Object.keys(originalPositions).length > 0) {
+      for (const n of nodes) {
+        const orig = originalPositions[n.id];
+        if (!orig) continue;
+        if (Math.round(n.position.x) !== Math.round(orig.x) || Math.round(n.position.y) !== Math.round(orig.y)) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    setHasUnsavedChanges(changed);
+  }, [edges, originalEdges, nodes, originalPositions]);
 
   // Handle node click
   const onNodeClick = useCallback((event, node) => {
@@ -200,6 +238,20 @@ const Graph = () => {
   const closeNodeDetails = useCallback(() => {
     setSelectedNode(null);
   }, []);
+
+  // Open topic edit modal from selected node
+  const openEditModal = useCallback(() => {
+    if (!selectedNode) return;
+    const topic = {
+      id: selectedNode.id,
+      title: selectedNode.data?.label || '',
+      description: selectedNode.data?.description || '',
+      node_type: selectedNode.data?.nodeType || '',
+      position: selectedNode.position || { x: 0, y: 0 },
+    };
+    setTopicForEdit(topic);
+    setShowTopicModal(true);
+  }, [selectedNode]);
 
   // Save changes to the backend
   const saveChanges = useCallback(async () => {
@@ -224,8 +276,25 @@ const Graph = () => {
         await apiService.deleteTopicEdge(edge.source, edge.target);
       }
 
+      // Persist node position changes
+      const positionUpdates = [];
+      for (const n of nodes) {
+        const orig = originalPositions[n.id];
+        if (!orig) continue;
+        if (Math.round(n.position.x) !== Math.round(orig.x) || Math.round(n.position.y) !== Math.round(orig.y)) {
+          positionUpdates.push(apiService.updateTopic(n.id, { position: n.position }));
+        }
+      }
+      if (positionUpdates.length > 0) {
+        await Promise.all(positionUpdates);
+      }
+
       // Update original edges to current state
       setOriginalEdges(edges);
+      // Update original positions to current state
+      const newPositions = {};
+      for (const n of nodes) newPositions[n.id] = { x: n.position.x, y: n.position.y };
+      setOriginalPositions(newPositions);
       setHasUnsavedChanges(false);
     } catch (err) {
       console.error('Failed to save changes:', err);
@@ -233,7 +302,7 @@ const Graph = () => {
     } finally {
       setSavingChanges(false);
     }
-  }, [edges, originalEdges, hasUnsavedChanges]);
+  }, [edges, originalEdges, hasUnsavedChanges, nodes, originalPositions]);
 
   // Discard changes and reload from server
   const discardChanges = useCallback(() => {
@@ -310,6 +379,7 @@ const Graph = () => {
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         onNodeClick={onNodeClick}
+        onNodeDragStop={() => setHasUnsavedChanges(true)}
         fitView
         snapToGrid
         snapGrid={[20, 20]}
@@ -358,19 +428,19 @@ const Graph = () => {
             <div className="space-y-1 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-0.5" style={{ background: '#ef4444' }}></div>
-                <span>Prerequisite</span>
+                <span>Prerequisite (arrow from dependent to prereq)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-0.5" style={{ background: '#3b82f6' }}></div>
-                <span>Follows</span>
+                <span>Follows (directional)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-0.5" style={{ background: '#10b981' }}></div>
-                <span>Similar</span>
+                <span>Similar (bidirectional)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-0.5" style={{ background: '#6b7280' }}></div>
-                <span>Related</span>
+                <span>Related (bidirectional)</span>
               </div>
             </div>
           </div>
@@ -395,7 +465,7 @@ const Graph = () => {
               <div className="flex-1">
                 <h3 className="font-medium text-yellow-800 text-sm mb-2">Unsaved Changes</h3>
                 <p className="text-yellow-700 text-xs mb-3">
-                  You have made changes to the graph connections. Save or discard your changes.
+                  You have changes to connections or node positions. Save or discard your changes.
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -464,12 +534,12 @@ const Graph = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    closeNodeDetails();
-                    navigate('/topics');
+                    // Keep context on graph and open inline edit modal
+                    openEditModal();
                   }}
                   className="flex-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  Edit in Topics
+                  Edit Topic
                 </button>
                 <button
                   onClick={closeNodeDetails}
@@ -480,6 +550,23 @@ const Graph = () => {
               </div>
             </div>
           </Panel>
+        )}
+
+        {/* Topic Edit Modal */}
+        {showTopicModal && topicForEdit && (
+          <TopicForm
+            topic={topicForEdit}
+            onSuccess={async () => {
+              setShowTopicModal(false);
+              setTopicForEdit(null);
+              setSelectedNode(null);
+              await loadGraphData();
+            }}
+            onCancel={() => {
+              setShowTopicModal(false);
+              setTopicForEdit(null);
+            }}
+          />
         )}
       </ReactFlow>
       </div>
