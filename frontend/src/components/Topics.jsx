@@ -100,6 +100,9 @@ const Topics = () => {
                 <Link to="/topics" className="bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm font-medium">
                   Topics
                 </Link>
+                <Link to="/notes" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                  Notes
+                </Link>
                 <Link to="/graph" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
                   Graph
                 </Link>

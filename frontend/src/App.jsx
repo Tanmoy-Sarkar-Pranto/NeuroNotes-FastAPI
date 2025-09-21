@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Topics from './components/Topics';
+import Notes from './components/Notes';
 import Graph from './components/Graph';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -34,6 +35,14 @@ const AppContent = () => {
         element={
           <ProtectedRoute>
             <Topics />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notes"
+        element={
+          <ProtectedRoute>
+            <Notes />
           </ProtectedRoute>
         }
       />

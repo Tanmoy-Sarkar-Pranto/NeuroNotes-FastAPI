@@ -179,6 +179,102 @@ class ApiService {
     const data = await this.handleResponse(response);
     return data.data || data;
   }
+
+  // Note API methods
+  async getNotesByTopic(topicId) {
+    const response = await fetch(`${API_BASE_URL}/notes/${topicId}`, {
+      method: 'GET',
+      headers: this.getHeaders(true),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async getNote(noteId) {
+    const response = await fetch(`${API_BASE_URL}/notes/single/${noteId}`, {
+      method: 'GET',
+      headers: this.getHeaders(true),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async createNote(noteData) {
+    const response = await fetch(`${API_BASE_URL}/notes/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(noteData),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async updateNote(noteId, noteData) {
+    const response = await fetch(`${API_BASE_URL}/notes/${noteId}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(noteData),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async deleteNote(noteId) {
+    const response = await fetch(`${API_BASE_URL}/notes/${noteId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  // Tag API methods
+  async getTags() {
+    const response = await fetch(`${API_BASE_URL}/tags/`, {
+      method: 'GET',
+      headers: this.getHeaders(true),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async createTag(tagData) {
+    const response = await fetch(`${API_BASE_URL}/tags/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(tagData),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async updateTag(tagId, tagData) {
+    const response = await fetch(`${API_BASE_URL}/tags/${tagId}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(tagData),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
+
+  async deleteTag(tagId) {
+    const response = await fetch(`${API_BASE_URL}/tags/${tagId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    });
+
+    const data = await this.handleResponse(response);
+    return data.data || data;
+  }
 }
 
 export const apiService = new ApiService();
