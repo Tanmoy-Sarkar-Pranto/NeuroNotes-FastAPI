@@ -1,8 +1,10 @@
-services:
-  # PostgreSQL Database
-  - type: postgres
-    name: neuronotes-db
+databases:
+  - name: neuronotes-db
     plan: free
+    postgresMajorVersion: 16
+    databaseName: neuronotes
+
+services:
 
   # Frontend Static Site
   - type: web
