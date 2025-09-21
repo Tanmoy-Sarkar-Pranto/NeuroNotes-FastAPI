@@ -9,20 +9,22 @@ from .config import settings
 
 # Create sync engine for regular operations
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.sync_database_url,
     echo=settings.DATABASE_ECHO,
     pool_pre_ping=True,
-    pool_size=20,
-    max_overflow=0,
+    pool_size=5,
+    max_overflow=5,
+    pool_recycle=300,
 )
 
 # Create async engine for async operations (if needed)
 async_engine = create_async_engine(
-    settings.ASYNC_DATABASE_URL,
+    settings.async_database_url,
     echo=settings.DATABASE_ECHO,
     pool_pre_ping=True,
-    pool_size=20,
-    max_overflow=0,
+    pool_size=5,
+    max_overflow=5,
+    pool_recycle=300,
 )
 
 # Create session makers

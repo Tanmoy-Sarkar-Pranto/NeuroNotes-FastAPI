@@ -6,10 +6,15 @@ from sqlalchemy import pool
 from alembic import context
 from app.models import User, Note, NoteTag, NoteTagMap, Topic, TopicEdge
 from sqlmodel import SQLModel
+from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Ensure the database URL comes from environment/settings on Render
+# This overrides the value in alembic.ini at runtime
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
