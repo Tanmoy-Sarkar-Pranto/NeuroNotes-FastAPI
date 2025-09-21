@@ -1,13 +1,13 @@
 services:
   # PostgreSQL Database
-  - type: pserv
+  - type: postgres
     name: neuronotes-db
     plan: free
 
   # Frontend Static Site
   - type: web
     name: neuronotes-frontend
-    env: static
+    runtime: static
     plan: free
     rootDir: frontend
     buildCommand: "npm ci && npm run build"
@@ -19,7 +19,7 @@ services:
   # Web Service (Backend API)
   - type: web
     name: neuronotes-app
-    env: python
+    runtime: python
     plan: free
     buildCommand: "./build.sh"
     startCommand: "cd backend && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2"
